@@ -13,7 +13,6 @@
  */
 namespace GatewayWorker;
 
-use Throwable;
 use Workerman\Connection\TcpConnection;
 
 use Workerman\Worker;
@@ -205,59 +204,51 @@ class BusinessWorker extends Worker
      */
     protected function onWorkerStart()
     {
-        try {
-            if (!class_exists('\Protocols\GatewayProtocol')) {
-                class_alias('GatewayWorker\Protocols\GatewayProtocol', 'Protocols\GatewayProtocol');
-            }
-
-            if (!is_array($this->registerAddress)) {
-                $this->registerAddress = array($this->registerAddress);
-            }
-            $this->connectToRegister();
-
-            \GatewayWorker\Lib\Gateway::setBusinessWorker($this);
-            \GatewayWorker\Lib\Gateway::$secretKey = $this->secretKey;
-            if ($this->_onWorkerStart) {
-                call_user_func($this->_onWorkerStart, $this);
-            }
-
-            if (is_callable($this->eventHandler . '::onWorkerStart')) {
-                call_user_func($this->eventHandler . '::onWorkerStart', $this);
-            }
-
-            if (function_exists('pcntl_signal')) {
-                // 业务超时信号处理
-                pcntl_signal(SIGALRM, array($this, 'timeoutHandler'), false);
-            } else {
-                $this->processTimeout = 0;
-            }
-
-            // 设置回调
-            if (is_callable($this->eventHandler . '::onConnect')) {
-                $this->_eventOnConnect = $this->eventHandler . '::onConnect';
-            }
-
-            if (is_callable($this->eventHandler . '::onMessage')) {
-                $this->_eventOnMessage = $this->eventHandler . '::onMessage';
-            } else {
-                echo "Waring: {$this->eventHandler}::onMessage is not callable\n";
-            }
-
-            if (is_callable($this->eventHandler . '::onClose')) {
-                $this->_eventOnClose = $this->eventHandler . '::onClose';
-            }
-
-            if (is_callable($this->eventHandler . '::onWebSocketConnect')) {
-                $this->_eventOnWebSocketConnect = $this->eventHandler . '::onWebSocketConnect';
-            }
-        } catch (Throwable $throwable) {
-            $errInfo = [
-                'message' => $throwable->getMessage(),
-                'file'    => sprintf('%s on line %s', $throwable->getFile(), $throwable->getLine()),
-                'trace'   => $throwable->getTrace(),
-            ];
-            Worker::log(json_encode($errInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        if (!class_exists('\Protocols\GatewayProtocol')) {
+            class_alias('GatewayWorker\Protocols\GatewayProtocol', 'Protocols\GatewayProtocol');
         }
+
+        if (!is_array($this->registerAddress)) {
+            $this->registerAddress = array($this->registerAddress);
+        }
+        $this->connectToRegister();
+
+        \GatewayWorker\Lib\Gateway::setBusinessWorker($this);
+        \GatewayWorker\Lib\Gateway::$secretKey = $this->secretKey;
+        if ($this->_onWorkerStart) {
+            call_user_func($this->_onWorkerStart, $this);
+        }
+        
+        if (is_callable($this->eventHandler . '::onWorkerStart')) {
+            call_user_func($this->eventHandler . '::onWorkerStart', $this);
+        }
+
+        if (function_exists('pcntl_signal')) {
+            // 业务超时信号处理
+            pcntl_signal(SIGALRM, array($this, 'timeoutHandler'), false);
+        } else {
+            $this->processTimeout = 0;
+        }
+
+        // 设置回调
+        if (is_callable($this->eventHandler . '::onConnect')) {
+            $this->_eventOnConnect = $this->eventHandler . '::onConnect';
+        }
+
+        if (is_callable($this->eventHandler . '::onMessage')) {
+            $this->_eventOnMessage = $this->eventHandler . '::onMessage';
+        } else {
+            echo "Waring: {$this->eventHandler}::onMessage is not callable\n";
+        }
+
+        if (is_callable($this->eventHandler . '::onClose')) {
+            $this->_eventOnClose = $this->eventHandler . '::onClose';
+        }
+
+        if (is_callable($this->eventHandler . '::onWebSocketConnect')) {
+            $this->_eventOnWebSocketConnect = $this->eventHandler . '::onWebSocketConnect';
+        }
+
     }
 
     /**
