@@ -744,13 +744,18 @@ class Gateway
      * 批量向gateway发送并获取数据
      * @param $gateway_buffer_array
      * @return array
+     * @throws Exception
      */
     protected static function getBufferFromGateway($gateway_buffer_array)
     {
         $client_array = $status_data = $client_address_map = $receive_buffer_array = $recv_length_array = array();
         // 批量向所有gateway进程发送请求数据
         foreach ($gateway_buffer_array as $address => $gateway_buffer) {
-            $client = stream_socket_client("tcp://$address", $errno, $errmsg, static::$connectTimeout);
+            $flag = STREAM_CLIENT_CONNECT | STREAM_CLIENT_PERSISTENT;
+            $client = stream_socket_client("tcp://$address", $errno, $errmsg, static::$connectTimeout, $flag);
+            if (!$client) {
+                throw new Exception("can not connect to tcp://$address $errmsg");
+            }
             if ($client && strlen($gateway_buffer) === stream_socket_sendto($client, $gateway_buffer)) {
                 $socket_id                        = (int)$client;
                 $client_array[$socket_id]         = $client;
@@ -1138,7 +1143,8 @@ class Gateway
     {
         $buffer = GatewayProtocol::encode($data);
         $buffer = static::$secretKey ? static::generateAuthBuffer() . $buffer : $buffer;
-        $client = stream_socket_client("tcp://$address", $errno, $errmsg, static::$connectTimeout);
+        $flag = STREAM_CLIENT_CONNECT | STREAM_CLIENT_PERSISTENT;
+        $client = stream_socket_client("tcp://$address", $errno, $errmsg, static::$connectTimeout, $flag);
         if (!$client) {
             throw new Exception("can not connect to tcp://$address $errmsg");
         }
