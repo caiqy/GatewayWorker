@@ -751,7 +751,7 @@ class Gateway
         $client_array = $status_data = $client_address_map = $receive_buffer_array = $recv_length_array = array();
         // 批量向所有gateway进程发送请求数据
         foreach ($gateway_buffer_array as $address => $gateway_buffer) {
-            $flag = STREAM_CLIENT_CONNECT | STREAM_CLIENT_PERSISTENT;
+            $flag   = static::$persistentConnection ? STREAM_CLIENT_PERSISTENT | STREAM_CLIENT_CONNECT : STREAM_CLIENT_CONNECT;
             $client = stream_socket_client("tcp://$address", $errno, $errmsg, static::$connectTimeout, $flag);
             if (!$client) {
                 throw new Exception("can not connect to tcp://$address $errmsg");
@@ -1143,7 +1143,7 @@ class Gateway
     {
         $buffer = GatewayProtocol::encode($data);
         $buffer = static::$secretKey ? static::generateAuthBuffer() . $buffer : $buffer;
-        $flag = STREAM_CLIENT_CONNECT | STREAM_CLIENT_PERSISTENT;
+        $flag   = static::$persistentConnection ? STREAM_CLIENT_PERSISTENT | STREAM_CLIENT_CONNECT : STREAM_CLIENT_CONNECT;
         $client = stream_socket_client("tcp://$address", $errno, $errmsg, static::$connectTimeout, $flag);
         if (!$client) {
             throw new Exception("can not connect to tcp://$address $errmsg");
